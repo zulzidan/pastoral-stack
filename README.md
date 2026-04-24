@@ -1,5 +1,27 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Brand
+
+**Canonical brand assets live in `public/`.**
+
+| Asset | File |
+|---|---|
+| Brand strategy & color palette | `public/PastoralStack_Brand_Guidelines.pdf` |
+| Logo anatomy & usage rules | `public/PastoralStack_Logo_Anatomy.pdf` |
+| Logo vector (source of truth) | `public/logo.svg` |
+
+**Canonical color palette** (all downstream assets and UI tokens derive from these):
+
+| Role | Name | Hex |
+|---|---|---|
+| Headers / primary green | Eucalyptus | `#1D4333` |
+| Structure / secondary text | Charcoal | `#2A2F35` |
+| CTA buttons / accent | Rust Ochre | `#7A4C2E` |
+| Background | Brand White | `#FDFDFB` |
+
+CSS variables are defined in `app/globals.css`.  
+Tailwind utility classes: `bg-brand-*`, `text-brand-*`, `border-brand-*`.
+
 ## Getting Started
 
 First, run the development server:
