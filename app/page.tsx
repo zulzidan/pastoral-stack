@@ -4,7 +4,9 @@ import React, { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { HeroTerrainModel } from "@/components/hero-terrain-model"
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion"
-import { ArrowRightIcon, CheckIcon, LeafIcon, MenuIcon, XIcon } from "lucide-react"
+import { ArrowRightIcon, CheckIcon, MenuIcon, XIcon } from "lucide-react"
+import { PastoralLogo } from "@/components/pastoral-logo"
+import { AuditForm } from "@/components/audit-form"
 
 // ─── Topographic contour ring decoration ──────────────────────────────────
 function TopoRings({ className }: { className?: string }) {
@@ -74,11 +76,12 @@ const stepItemVariants = {
 }
 
 // ─── Nav ──────────────────────────────────────────────────────────────────
-function Nav() {
+function Nav({ onAuditClick }: { onAuditClick: () => void }) {
   const [open, setOpen] = useState(false)
   const links = [
     { label: "Services", href: "#solution" },
     { label: "How It Works", href: "#how" },
+    { label: "Work", href: "#work" },
     { label: "About", href: "#about" },
   ]
 
@@ -87,7 +90,12 @@ function Nav() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 sm:px-10">
         {/* Logo */}
         <a href="#" className="flex items-center gap-2.5 no-underline">
-          <LeafIcon size={16} className="text-white/60" />
+          <PastoralLogo
+            className="h-8 w-auto"
+            serverFill="#FDFDFB"
+            rustFill="#c8845a"
+            greenFill="#6ab88a"
+          />
           <span className="font-[family-name:var(--font-dm-serif)] text-lg text-white tracking-wide">
             PastoralStack
           </span>
@@ -104,14 +112,13 @@ function Nav() {
               {l.label}
             </a>
           ))}
-          <a href="#offer">
-            <Button
+          <Button
               size="sm"
               className="bg-brand-rust text-white hover:bg-brand-rust/85 border-transparent rounded-sm px-5"
+              onClick={onAuditClick}
             >
               Get Free Review
             </Button>
-          </a>
         </div>
 
         {/* Mobile toggle */}
@@ -138,11 +145,12 @@ function Nav() {
                 {l.label}
               </a>
             ))}
-            <a href="#offer" onClick={() => setOpen(false)}>
-              <Button className="w-full bg-brand-rust text-white hover:bg-brand-rust/85 border-transparent rounded-sm">
+            <Button
+                className="w-full bg-brand-rust text-white hover:bg-brand-rust/85 border-transparent rounded-sm"
+                onClick={() => { setOpen(false); onAuditClick() }}
+              >
                 Get Free Review
               </Button>
-            </a>
           </nav>
         </div>
       )}
@@ -192,6 +200,7 @@ function BulletLine({ children }: { children: React.ReactNode }) {
 export default function LandingPage() {
   const prefersReducedMotion = useReducedMotion()
   const [isDesktop, setIsDesktop] = useState(false)
+  const [auditOpen, setAuditOpen] = useState(false)
   const { scrollYProgress } = useScroll()
   const heroRingY = useTransform(scrollYProgress, [0, 0.28], [0, -80])
   const heroTextY = useTransform(scrollYProgress, [0, 0.28], [0, -38])
@@ -237,7 +246,8 @@ export default function LandingPage() {
 
   return (
     <div className="bg-brand-white text-brand-charcoal">
-      <Nav />
+      <AuditForm open={auditOpen} onOpenChange={setAuditOpen} />
+      <Nav onAuditClick={() => setAuditOpen(true)} />
 
       {/* ── 00 HERO ──────────────────────────────────────────── */}
       <section className="relative min-h-screen overflow-hidden bg-brand-eucalyptus pt-24 pb-20 flex items-center">
@@ -291,15 +301,14 @@ export default function LandingPage() {
               </motion.p>
 
               <motion.div variants={heroItemVariants} className="mt-10 flex flex-wrap gap-3">
-                <a href="#offer">
-                  <Button
+                <Button
                     size="lg"
                     className="bg-brand-rust text-white hover:bg-brand-rust/85 border-transparent rounded-sm px-8 text-sm font-semibold transition-transform hover:-translate-y-0.5"
+                    onClick={() => setAuditOpen(true)}
                   >
                     Get a Free System Audit
                     <ArrowRightIcon size={15} className="ml-1" />
                   </Button>
-                </a>
                 <a href="#how">
                   <Button
                     variant="ghost"
@@ -661,7 +670,119 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── 08 FINAL CTA ─────────────────────────────────────── */}
+      {/* ── 08 WORK ──────────────────────────────────────────── */}
+      <section id="work" className="bg-brand-white py-24 sm:py-32">
+        <div className="mx-auto max-w-6xl px-6 sm:px-10 reveal">
+          <SectionLabel num="08" label="Previous Work" />
+
+          <h2
+            className="font-[family-name:var(--font-dm-serif)] text-brand-charcoal leading-tight max-w-xl"
+            style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }}
+          >
+            Land management platforms, built end-to-end
+          </h2>
+
+          <p className="mt-4 max-w-lg text-sm text-brand-charcoal/55 leading-relaxed">
+            Before PastoralStack, we built and shipped production-grade platforms for
+            land-based organisations internationally. This is a real client project.
+          </p>
+
+          {/* Case study card */}
+          <div className="mt-14 grid gap-0 lg:grid-cols-[1.15fr_1fr] border border-brand-charcoal/10 overflow-hidden">
+            {/* Browser chrome mock + UI illustration */}
+            <div className="relative bg-brand-eucalyptus/10 overflow-hidden min-h-[260px] lg:min-h-0">
+              <div className="flex items-center gap-1.5 px-4 py-3 border-b border-brand-charcoal/8 bg-brand-charcoal/[0.04]">
+                <div className="size-2.5 rounded-full bg-brand-charcoal/15" />
+                <div className="size-2.5 rounded-full bg-brand-charcoal/15" />
+                <div className="size-2.5 rounded-full bg-brand-charcoal/15" />
+                <div className="ml-3 flex-1 rounded-sm bg-brand-charcoal/8 h-4 max-w-[200px]" />
+              </div>
+              <div className="p-5 grid grid-cols-3 gap-3">
+                <div className="col-span-3 h-8 rounded-sm bg-brand-eucalyptus/25 flex items-center gap-2 px-3">
+                  <div className="size-4 rounded-sm bg-brand-eucalyptus/60" />
+                  <div className="w-16 h-2 rounded-full bg-brand-charcoal/12" />
+                  <div className="ml-auto flex gap-2">
+                    <div className="w-10 h-2 rounded-full bg-brand-charcoal/10" />
+                    <div className="w-10 h-2 rounded-full bg-brand-charcoal/10" />
+                    <div className="w-14 h-5 rounded-sm bg-brand-rust/35" />
+                  </div>
+                </div>
+                <div className="col-span-2 h-28 rounded-sm bg-brand-eucalyptus/20 p-3 flex flex-col justify-end gap-1.5">
+                  <div className="w-3/4 h-2.5 rounded-full bg-brand-eucalyptus/60" />
+                  <div className="w-1/2 h-2 rounded-full bg-brand-charcoal/20" />
+                  <div className="w-1/3 h-2 rounded-full bg-brand-charcoal/15 mt-1" />
+                </div>
+                <div className="h-28 rounded-sm bg-brand-charcoal/8 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-sm bg-brand-rust/25" />
+                </div>
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="h-20 rounded-sm bg-brand-charcoal/5 p-2.5 flex flex-col gap-1.5">
+                    <div className="w-full h-2 rounded-full bg-brand-charcoal/12" />
+                    <div className="w-4/5 h-2 rounded-full bg-brand-charcoal/8" />
+                    <div className="w-3/5 h-2 rounded-full bg-brand-charcoal/6 mt-auto" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Details panel */}
+            <div className="flex flex-col justify-center p-8 sm:p-10 lg:p-12 border-t lg:border-t-0 lg:border-l border-brand-charcoal/8">
+              <div className="mb-5 inline-flex items-center gap-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-brand-rust" />
+                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-charcoal/40">
+                  Real Project Case Study
+                </span>
+              </div>
+
+              <h3
+                className="font-[family-name:var(--font-dm-serif)] text-brand-charcoal leading-tight"
+                style={{ fontSize: "clamp(1.5rem, 2.5vw, 2rem)" }}
+              >
+                Land Management &amp; Services Platform
+              </h3>
+
+              <p className="mt-3 text-xs text-brand-charcoal/45 uppercase tracking-wide">
+                Texas AgriForestry — Small Farmers, Ranchers &amp; Landowners
+              </p>
+
+              <p className="mt-5 text-sm leading-relaxed text-brand-charcoal/60">
+                A full-stack platform for small farmers and landowners — member
+                onboarding, multi-step land stewardship plan workflows, payments, admin
+                tooling, and automated email pipelines. Delivered end-to-end and
+                currently live in production.
+              </p>
+
+              <ul className="mt-6 space-y-2.5 text-sm text-brand-charcoal/65">
+                {[
+                  "Member portal — auth, profiles & plan tracking",
+                  "Multi-step land management plan workflow",
+                  "Stripe payments & donation flows",
+                  "Admin dashboard — users, plans, subscribers",
+                  "Automated newsletter & email pipelines",
+                ].map((item) => (
+                  <CheckLine key={item}>{item}</CheckLine>
+                ))}
+              </ul>
+
+              <div className="mt-8 pt-6 border-t border-brand-charcoal/8">
+                <p className="text-xs text-brand-charcoal/35 mb-3 uppercase tracking-widest">Stack</p>
+                <div className="flex flex-wrap gap-2">
+                  {["Next.js", "AdonisJS", "PostgreSQL", "Stripe", "Contentful", "React Email"].map((t) => (
+                    <span
+                      key={t}
+                      className="px-2.5 py-1 text-xs rounded-sm bg-brand-charcoal/[0.06] text-brand-charcoal/55 font-mono"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 09 FINAL CTA ─────────────────────────────────────── */}
       <section id="cta" className="relative bg-brand-charcoal py-28 sm:py-36 overflow-hidden">
         <motion.div
           className="pointer-events-none absolute right-[-15%] top-1/2 -translate-y-1/2 opacity-40"
@@ -701,6 +822,7 @@ export default function LandingPage() {
               <Button
                 size="lg"
                 className="bg-brand-rust text-white hover:bg-brand-rust/85 border-transparent rounded-sm px-12 text-sm font-semibold"
+                onClick={() => setAuditOpen(true)}
               >
                 Get Free Review
                 <ArrowRightIcon size={15} className="ml-1.5" />
@@ -713,8 +835,13 @@ export default function LandingPage() {
       {/* ── FOOTER ───────────────────────────────────────────── */}
       <footer className="bg-brand-charcoal border-t border-white/8 px-6 py-8 sm:px-10">
         <div className="mx-auto max-w-6xl flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-white/30">
-            <LeafIcon size={13} />
+          <div className="flex items-center gap-2.5">
+            <PastoralLogo
+              className="h-6 w-auto"
+              serverFill="rgba(253,253,251,0.45)"
+              rustFill="rgba(192,112,56,0.6)"
+              greenFill="rgba(74,158,110,0.5)"
+            />
             <span className="font-[family-name:var(--font-dm-serif)] text-sm text-white/40">
               PastoralStack
             </span>

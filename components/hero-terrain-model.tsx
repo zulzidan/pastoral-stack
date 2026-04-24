@@ -1,13 +1,14 @@
 "use client"
 
-import { Suspense, useMemo, useRef } from "react"
-import { ContactShadows, Environment, useGLTF } from "@react-three/drei"
+import { useMemo, useRef } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
 import {
+  BufferGeometry,
+  Color,
+  Float32BufferAttribute,
   Group,
   MathUtils,
-  Mesh,
-  MeshPhysicalMaterial,
+  PlaneGeometry,
   SRGBColorSpace,
 } from "three"
 
@@ -15,62 +16,116 @@ type HeroTerrainModelProps = {
   className?: string
 }
 
-function TerrainAsset() {
-  const meshGroupRef = useRef<Group>(null)
-  const loadedObject = useGLTF("/models/pastoral-terrain.glb", true, true)
+const SEGS = 100
+const SIZE = 7.2
 
-  const terrainObject = useMemo(() => {
-    const clone = loadedObject.scene.clone(true)
-
-    clone.traverse((child) => {
-      const maybeMesh = child as Mesh
-      if (!maybeMesh.isMesh) {
-        return
-      }
-
-      maybeMesh.geometry.computeVertexNormals()
-
-      maybeMesh.material = new MeshPhysicalMaterial({
-        color: "#bcc5b7",
-        roughness: 0.48,
-        metalness: 0.06,
-        clearcoat: 0.38,
-        clearcoatRoughness: 0.46,
-        reflectivity: 0.38,
-        envMapIntensity: 1.8,
-        emissive: "#1d4333",
-        emissiveIntensity: 0.05,
-      })
-      maybeMesh.castShadow = true
-      maybeMesh.receiveShadow = true
-    })
-
-    return clone
-  }, [loadedObject.scene])
-
-  useFrame((state, delta) => {
-    if (!meshGroupRef.current) {
-      return
-    }
-
-    const pointerTargetX = 0.22 + state.pointer.y * 0.16
-    const pointerTargetY = -0.58 + state.pointer.x * 0.26
-    meshGroupRef.current.rotation.x = MathUtils.damp(meshGroupRef.current.rotation.x, pointerTargetX, 4.2, delta)
-    meshGroupRef.current.rotation.y = MathUtils.damp(meshGroupRef.current.rotation.y, pointerTargetY, 4.2, delta)
-    meshGroupRef.current.rotation.z = MathUtils.damp(meshGroupRef.current.rotation.z, -0.18, 4.2, delta)
-
-    meshGroupRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.85) * 0.06
-  })
-
-  return <primitive ref={meshGroupRef} object={terrainObject} scale={0.66} position={[0, -0.88, 0]} />
+// Layered noise: multi-octave sin/cos for organic terrain shape
+function terrainHeight(nx: number, nz: number): number {
+  let h = 0
+  h += Math.sin(nx * Math.PI * 2.1 + 0.7) * Math.cos(nz * Math.PI * 1.6 + 0.4) * 1.0
+  h += Math.sin(nx * Math.PI * 3.8 + 1.3) * Math.sin(nz * Math.PI * 3.2 + 0.9) * 0.48
+  h += Math.cos(nx * Math.PI * 6.4 + 0.5) * Math.cos(nz * Math.PI * 5.7 + 1.2) * 0.18
+  h += Math.sin((nx + nz) * Math.PI * 4.1 + 0.3) * 0.14
+  // Diagonal ridge (SW to NE)
+  const ridgeX = nx * 1.8 - 0.6
+  const ridgeZ = nz * 1.4 - 0.1
+  h += Math.exp(-(ridgeX * ridgeX + ridgeZ * ridgeZ * 0.4) * 2.2) * 1.1
+  // Broad valley
+  const dx = nx * 2 - 0.2
+  const dz = nz * 2 - 1.1
+  h -= Math.exp(-(dx * dx + dz * dz) * 0.7) * 0.38
+  return h
 }
 
-function TerrainFallback() {
+function ProceduralTerrain() {
+  const groupRef = useRef<Group>(null)
+
+  const { solidGeo, wireGeo } = useMemo(() => {
+    const geo = new PlaneGeometry(SIZE, SIZE, SEGS, SEGS)
+    geo.rotateX(-Math.PI / 2)
+
+    const pos = geo.attributes.position
+    const count = pos.count
+    const heights = new Float32Array(count)
+    let minH = Infinity
+    let maxH = -Infinity
+
+    // First pass: compute heights
+    for (let i = 0; i < count; i++) {
+      const x = pos.getX(i)
+      const z = pos.getZ(i)
+      const nx = x / SIZE
+      const nz = z / SIZE
+      const h = terrainHeight(nx, nz)
+      heights[i] = h
+      if (h < minH) minH = h
+      if (h > maxH) maxH = h
+    }
+
+    const range = maxH - minH
+
+    // Australian outback palette: deep valley → bright green slope → ochre/rust ridge
+    const colValley = new Color("#1e4a32")
+    const colSlope  = new Color("#2e6e48")
+    const colHill   = new Color("#5a9e6e")
+    const colPeak   = new Color("#c07038")
+
+    const colors = new Float32Array(count * 3)
+
+    // Second pass: apply displacement + vertex colors
+    for (let i = 0; i < count; i++) {
+      const rawH = heights[i]
+      const h = (rawH - minH) / range        // 0..1 normalised
+      const scaledH = rawH * 0.68            // world-space height (increased for drama)
+
+      pos.setY(i, scaledH)
+
+      // Colour ramp
+      let c: Color
+      if (h < 0.28) {
+        c = colValley.clone().lerp(colSlope, h / 0.28)
+      } else if (h < 0.62) {
+        c = colSlope.clone().lerp(colHill, (h - 0.28) / 0.34)
+      } else {
+        c = colHill.clone().lerp(colPeak, (h - 0.62) / 0.38)
+      }
+
+      colors[i * 3]     = c.r
+      colors[i * 3 + 1] = c.g
+      colors[i * 3 + 2] = c.b
+    }
+
+    geo.setAttribute("color", new Float32BufferAttribute(colors, 3))
+    geo.computeVertexNormals()
+
+    // Wireframe copy for contour overlay
+    const wireGeo: BufferGeometry = geo.clone()
+
+    return { solidGeo: geo, wireGeo }
+  }, [])
+
+  useFrame((state, delta) => {
+    if (!groupRef.current) return
+    const { pointer, clock } = state
+
+    const targetX = 0.35 + pointer.y * 0.10
+    const targetY = -0.52 + pointer.x * 0.20
+    groupRef.current.rotation.x = MathUtils.damp(groupRef.current.rotation.x, targetX, 3.8, delta)
+    groupRef.current.rotation.y = MathUtils.damp(groupRef.current.rotation.y, targetY, 3.8, delta)
+    groupRef.current.position.y = Math.sin(clock.elapsedTime * 0.72) * 0.055
+  })
+
   return (
-    <mesh rotation={[0.8, 0.3, -0.3]}>
-      <boxGeometry args={[2.2, 0.9, 2.2]} />
-      <meshStandardMaterial color="#3f6a58" />
-    </mesh>
+    <group ref={groupRef} position={[0, -0.55, 0]}>
+      {/* Solid terrain */}
+      <mesh geometry={solidGeo} castShadow receiveShadow>
+        <meshStandardMaterial vertexColors roughness={0.78} metalness={0.02} />
+      </mesh>
+      {/* Contour wireframe overlay */}
+      <mesh geometry={wireGeo}>
+        <meshBasicMaterial color="#7ac89e" wireframe transparent opacity={0.15} />
+      </mesh>
+    </group>
   )
 }
 
@@ -79,48 +134,41 @@ export function HeroTerrainModel({ className }: HeroTerrainModelProps) {
     <div className={className}>
       <div className="terrain-shell">
         <Canvas
-          dpr={[1, 1.6]}
+          dpr={[1, 1.8]}
           shadows
           gl={{ antialias: true }}
-          camera={{ position: [0, 2.9, 5.4], fov: 29 }}
+          camera={{ position: [0, 2.8, 5.2], fov: 34 }}
           onCreated={({ gl }) => {
             gl.outputColorSpace = SRGBColorSpace
           }}
         >
           <color attach="background" args={["#1d4333"]} />
-          <Environment preset="city" background={false} blur={0.55} />
 
-          <ambientLight intensity={0.4} />
+          {/* Soft ambient fill */}
+          <ambientLight intensity={0.72} color="#d0ead8" />
+          {/* Primary warm sun from upper right */}
           <directionalLight
             castShadow
-            position={[4.8, 8.2, 4.2]}
-            intensity={1.24}
-            color="#f8f3e8"
+            position={[5.2, 9.0, 4.6]}
+            intensity={1.8}
+            color="#f4ead2"
             shadow-mapSize-width={1024}
             shadow-mapSize-height={1024}
           />
-          <pointLight position={[-4.2, 3.2, -3.3]} intensity={0.34} color="#7a4c2e" />
-          <spotLight position={[0, 6.4, 8]} intensity={0.36} angle={0.42} penumbra={0.7} color="#fdfdfb" />
+          {/* Rust sidelight to warm the ridge peaks */}
+          <pointLight position={[-4.5, 3.5, 1.0]} intensity={0.9} color="#c07038" />
+          {/* Cool fill from behind */}
+          <pointLight position={[0.5, 1.2, -4.5]} intensity={0.35} color="#3a7a5a" />
 
-          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.12, 0]} receiveShadow>
-            <circleGeometry args={[3.3, 64]} />
-            <meshStandardMaterial color="#17372a" roughness={0.22} metalness={0.1} envMapIntensity={1.25} />
+          {/* Ground plane */}
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.05, 0]} receiveShadow>
+            <circleGeometry args={[3.6, 72]} />
+            <meshStandardMaterial color="#142b1e" roughness={0.95} metalness={0} />
           </mesh>
-          <ContactShadows
-            position={[0, -1.09, 0]}
-            opacity={0.3}
-            scale={4.6}
-            blur={2.2}
-            far={2.7}
-          />
 
-          <Suspense fallback={<TerrainFallback />}>
-            <TerrainAsset />
-          </Suspense>
+          <ProceduralTerrain />
         </Canvas>
       </div>
     </div>
   )
 }
-
-useGLTF.preload("/models/pastoral-terrain.glb", true, true)
