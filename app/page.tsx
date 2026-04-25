@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { HeroTerrainModel } from "@/components/hero-terrain-model"
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion"
+import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from "framer-motion"
 import { ArrowRightIcon, CheckIcon, MenuIcon, XIcon } from "lucide-react"
 import { PastoralLogo } from "@/components/pastoral-logo"
 import { AuditForm } from "@/components/audit-form"
@@ -123,37 +123,91 @@ function Nav({ onAuditClick }: { onAuditClick: () => void }) {
 
         {/* Mobile toggle */}
         <button
-          className="text-white md:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-sm text-white transition-colors hover:bg-white/10 md:hidden"
           onClick={() => setOpen((v) => !v)}
           aria-label="Toggle menu"
         >
-          {open ? <XIcon size={20} /> : <MenuIcon size={20} />}
+          <AnimatePresence initial={false} mode="wait">
+            {open ? (
+              <motion.span
+                key="close"
+                initial={{ rotate: -45, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: 45, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <XIcon size={18} />
+              </motion.span>
+            ) : (
+              <motion.span
+                key="menu"
+                initial={{ rotate: 45, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: -45, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <MenuIcon size={18} />
+              </motion.span>
+            )}
+          </AnimatePresence>
         </button>
       </div>
 
       {/* Mobile menu */}
-      {open && (
-        <div className="border-t border-white/10 bg-brand-eucalyptus px-6 pb-6 pt-4 md:hidden">
-          <nav className="flex flex-col gap-4">
-            {links.map((l) => (
-              <a
-                key={l.href}
-                href={l.href}
-                className="text-sm text-white/70 no-underline"
-                onClick={() => setOpen(false)}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            key="mobile-menu"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden border-t border-white/10 bg-brand-eucalyptus md:hidden"
+          >
+            <nav className="px-6 pb-6 pt-3">
+              {links.map((l, i) => (
+                <motion.a
+                  key={l.href}
+                  href={l.href}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.045 + 0.06, duration: 0.2 }}
+                  className="flex items-center justify-between border-b border-white/8 py-3.5 text-sm font-medium text-white/75 no-underline transition-colors hover:text-white"
+                  onClick={() => setOpen(false)}
+                >
+                  {l.label}
+                  <motion.span
+                    initial={{ x: 0, opacity: 0.3 }}
+                    whileHover={{ x: 2, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 200 }}
+                  >
+                    <ArrowRightIcon size={13} />
+                  </motion.span>
+                </motion.a>
+              ))}
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: links.length * 0.045 + 0.1, duration: 0.2 }}
+                className="mt-5"
               >
-                {l.label}
-              </a>
-            ))}
-            <Button
-                className="w-full bg-brand-rust text-white hover:bg-brand-rust/85 border-transparent rounded-sm"
-                onClick={() => { setOpen(false); onAuditClick() }}
-              >
-                Get Free Review
-              </Button>
-          </nav>
-        </div>
-      )}
+                <Button
+                  className="relative w-full overflow-hidden bg-brand-rust text-white hover:bg-brand-rust/85 border-transparent rounded-sm group"
+                  onClick={() => { setOpen(false); onAuditClick() }}
+                >
+                  <motion.span
+                    initial={{ x: "-100%" }}
+                    whileHover={{ x: "100%" }}
+                    transition={{ duration: 0.4 }}
+                    className="absolute inset-0 bg-white/20"
+                  />
+                  <span className="relative">Get Free Review</span>
+                </Button>
+              </motion.div>
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   )
 }
@@ -284,7 +338,12 @@ export default function LandingPage() {
               style={isDesktop ? { y: heroTextY } : undefined}
             >
               <motion.div variants={heroItemVariants} className="mb-8 flex items-center gap-3">
-                <div className="h-px w-12 bg-brand-rust" />
+                <motion.div 
+                  className="h-px w-12 bg-brand-rust"
+                  initial={{ width: 0 }}
+                  animate={{ width: 48 }}
+                  transition={{ delay: 0.22, duration: 0.5 }}
+                />
                 <span className="text-xs font-semibold uppercase tracking-[0.22em] text-white/50">
                   Australian Agricultural Operations
                 </span>
@@ -293,36 +352,60 @@ export default function LandingPage() {
               <motion.h1
                 variants={heroItemVariants}
                 className="font-[family-name:var(--font-dm-serif)] italic text-white leading-[1.08] tracking-[-0.01em]"
-                style={{ fontSize: "clamp(2.6rem, 6vw, 5rem)" }}
+                style={{ fontSize: "clamp(1.6rem, 8vw, 5rem)" }}
               >
-                Digital Infrastructure<br />
-                for Pastoral &amp;<br />
-                Agricultural Operations
+                Digital Infrastructure for Pastoral &amp; Agricultural Operations
               </motion.h1>
 
-              <motion.p variants={heroItemVariants} className="mt-7 max-w-xl text-lg leading-relaxed text-white/65">
+              <motion.p variants={heroItemVariants} className="mt-6 max-w-xl text-base sm:text-lg leading-relaxed text-white/65">
                 We build reliable, scalable systems for stations, agribusinesses,
                 and land management organisations.
               </motion.p>
 
-              <motion.div variants={heroItemVariants} className="mt-10 flex flex-wrap gap-3">
-                <Button
+              <motion.div variants={heroItemVariants} className="mt-10 flex flex-col sm:flex-row flex-wrap gap-3">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full sm:w-auto"
+                >
+                  <Button
                     size="lg"
-                    className="bg-brand-rust text-white hover:bg-brand-rust/85 border-transparent rounded-sm px-8 text-sm font-semibold transition-transform hover:-translate-y-0.5"
+                    className="relative w-full overflow-hidden bg-brand-rust text-white hover:bg-brand-rust/85 border-transparent rounded-sm group transition-shadow hover:shadow-lg"
                     onClick={() => setAuditOpen(true)}
                   >
-                    Get a Free System Audit
-                    <ArrowRightIcon size={15} className="ml-1" />
+                    <motion.span
+                      initial={{ x: "-100%" }}
+                      whileHover={{ x: "100%" }}
+                      transition={{ duration: 0.4 }}
+                      className="absolute inset-0 bg-white/20"
+                    />
+                    <span className="relative flex items-center">
+                      Get a Free System Audit
+                      <motion.span 
+                        initial={{ x: 0 }}
+                        whileHover={{ x: 3 }}
+                        transition={{ type: "spring", stiffness: 200 }}
+                        className="ml-1"
+                      >
+                        <ArrowRightIcon size={15} />
+                      </motion.span>
+                    </span>
                   </Button>
-                <a href="#how">
+                </motion.div>
+                <motion.a 
+                  href="#how" 
+                  className="w-full sm:w-auto"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
                   <Button
                     variant="ghost"
                     size="lg"
-                    className="text-white/80 hover:text-white hover:bg-white/10 rounded-sm px-8 text-sm transition-transform hover:-translate-y-0.5"
+                    className="w-full border border-white/25 text-white/80 hover:text-white hover:bg-white/10 rounded-sm px-8 text-sm transition-all hover:border-white/50"
                   >
                     See How It Works
                   </Button>
-                </a>
+                </motion.a>
               </motion.div>
             </motion.div>
 
@@ -338,7 +421,7 @@ export default function LandingPage() {
           </div>
 
           {/* Scroll indicator */}
-          <div className="absolute bottom-10 left-6 sm:left-10 flex items-center gap-2 text-white/25">
+          <div className="absolute bottom-10 left-6 sm:left-10 hidden sm:flex items-center gap-2 text-white/25">
             <div className="h-8 w-px bg-white/20" />
             <span className="text-[10px] tracking-[0.2em] uppercase">Scroll</span>
           </div>
@@ -346,7 +429,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── 01 PROBLEM ───────────────────────────────────────── */}
-      <section id="problem" className="relative bg-brand-white py-24 sm:py-32">
+      <section id="problem" className="relative bg-brand-white py-16 sm:py-24 overflow-hidden">
         <div className="mx-auto max-w-6xl px-6 sm:px-10 reveal reveal-delay-1">
           <div className="grid gap-16 lg:grid-cols-[1fr_1.1fr] lg:gap-24">
             <div>
@@ -387,7 +470,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── 02 SOLUTION ──────────────────────────────────────── */}
-      <section id="solution" className="relative bg-brand-charcoal py-24 sm:py-32 overflow-hidden">
+      <section id="solution" className="relative bg-brand-charcoal py-16 sm:py-24 overflow-hidden">
         <div className="mx-auto max-w-6xl px-6 sm:px-10 reveal reveal-delay-1">
           <div className="grid gap-16 lg:grid-cols-[1fr_1.1fr] lg:gap-24">
             <div>
@@ -435,9 +518,9 @@ export default function LandingPage() {
       </section>
 
       {/* ── 03 OFFER ─────────────────────────────────────────── */}
-      <section id="offer" className="bg-brand-white py-24 sm:py-32">
+      <section id="offer" className="bg-brand-white py-16 sm:py-24">
         <div className="mx-auto max-w-6xl px-6 sm:px-10">
-          <div className="rounded-none border border-brand-charcoal/10 bg-brand-eucalyptus/[0.04] p-10 sm:p-16 lg:p-20 relative overflow-hidden reveal">
+          <div className="rounded-none border border-brand-charcoal/10 bg-brand-eucalyptus/[0.04] p-6 sm:p-12 lg:p-20 relative overflow-hidden reveal">
             {/* Rust accent bar */}
             <div className="absolute top-0 left-0 w-1 h-full bg-brand-rust" />
 
@@ -469,7 +552,7 @@ export default function LandingPage() {
             </p>
 
             <motion.div
-              className="mt-10 inline-flex"
+              className="mt-10 w-full sm:w-auto inline-flex"
               animate={
                 prefersReducedMotion
                   ? undefined
@@ -479,20 +562,41 @@ export default function LandingPage() {
               }
               transition={{ duration: 1.2, times: [0, 0.4, 1], repeat: Infinity, repeatDelay: 4.2 }}
             >
-              <Button
-                size="lg"
-                className="bg-brand-rust text-white hover:bg-brand-rust/85 border-transparent rounded-sm px-10 text-sm font-semibold"
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full"
               >
-                Request Free Review
-                <ArrowRightIcon size={15} className="ml-1.5" />
-              </Button>
+                <Button
+                  size="lg"
+                  className="relative w-full overflow-hidden bg-brand-rust text-white hover:bg-brand-rust/85 border-transparent rounded-sm group shadow-md hover:shadow-lg transition-shadow"
+                >
+                  <motion.span
+                    initial={{ x: "-100%" }}
+                    whileHover={{ x: "100%" }}
+                    transition={{ duration: 0.4 }}
+                    className="absolute inset-0 bg-white/20"
+                  />
+                  <span className="relative flex items-center">
+                    Request Free Review
+                    <motion.span 
+                      initial={{ x: 0 }}
+                      whileHover={{ x: 3 }}
+                      transition={{ type: "spring", stiffness: 200 }}
+                      className="ml-1.5"
+                    >
+                      <ArrowRightIcon size={15} />
+                    </motion.span>
+                  </span>
+                </Button>
+              </motion.div>
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* ── 04 HOW IT WORKS ──────────────────────────────────── */}
-      <section id="how" className="relative bg-brand-charcoal py-24 sm:py-32 overflow-hidden">
+      <section id="how" className="relative bg-brand-charcoal py-16 sm:py-24 overflow-hidden">
         <div className="mx-auto max-w-6xl px-6 sm:px-10 reveal reveal-delay-1">
           <SectionLabel num="04" label="How It Works" />
 
@@ -504,7 +608,7 @@ export default function LandingPage() {
           </h2>
 
           <motion.div
-            className="mt-16 grid gap-0 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/10"
+            className="mt-12 grid gap-0 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/10"
             variants={stepsContainerVariants}
             initial={prefersReducedMotion ? false : "hidden"}
             whileInView="show"
@@ -527,15 +631,17 @@ export default function LandingPage() {
                 desc: "We implement and optimise for long-term use. Built to last, not to be replaced in 12 months.",
               },
             ].map(({ step, title, desc }) => (
-              <motion.div key={step} className="pt-10 sm:pt-0 sm:px-10 first:pl-0 last:pr-0" variants={stepItemVariants}>
+              <motion.div key={step} className="flex gap-5 py-7 border-b border-white/10 sm:border-b-0 sm:block sm:pt-0 sm:px-10 last:border-b-0 first:sm:pl-0 last:sm:pr-0" variants={stepItemVariants}>
                 <div
-                  className="font-[family-name:var(--font-dm-serif)] italic leading-none text-white/15 select-none"
-                  style={{ fontSize: "clamp(4rem, 8vw, 7rem)" }}
+                  className="font-[family-name:var(--font-dm-serif)] italic leading-none text-white/15 select-none shrink-0 sm:block"
+                  style={{ fontSize: "clamp(3rem, 8vw, 7rem)" }}
                 >
                   {step}
                 </div>
-                <h3 className="mt-4 text-xl font-semibold text-white tracking-tight">{title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-white/55">{desc}</p>
+                <div>
+                  <h3 className="text-base sm:mt-4 sm:text-xl font-semibold text-white tracking-tight">{title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-white/55">{desc}</p>
+                </div>
               </motion.div>
             ))}
           </motion.div>
@@ -550,7 +656,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── 05 WHO THIS IS FOR ────────────────────────────────── */}
-      <section id="who" className="bg-brand-white py-24 sm:py-32">
+      <section id="who" className="bg-brand-white py-16 sm:py-24">
         <div className="mx-auto max-w-6xl px-6 sm:px-10 reveal">
           <div className="grid gap-16 lg:grid-cols-[1fr_1fr] lg:gap-24">
             <div>
@@ -588,7 +694,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── 06 WHY PASTORALSTACK ─────────────────────────────── */}
-      <section id="why" className="relative bg-brand-eucalyptus py-24 sm:py-32 overflow-hidden">
+      <section id="why" className="relative bg-brand-eucalyptus py-16 sm:py-24 overflow-hidden">
         <div className="mx-auto max-w-6xl px-6 sm:px-10 reveal reveal-delay-1">
           <SectionLabel num="06" label="Why PastoralStack" />
 
@@ -639,7 +745,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── 07 ABOUT ─────────────────────────────────────────── */}
-      <section id="about" className="bg-brand-white py-24 sm:py-32">
+      <section id="about" className="bg-brand-white py-16 sm:py-24">
         <div className="mx-auto max-w-6xl px-6 sm:px-10 reveal">
           <div className="grid gap-16 lg:grid-cols-[1fr_1.1fr] lg:gap-24">
             <div>
@@ -676,7 +782,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── 08 WORK ──────────────────────────────────────────── */}
-      <section id="work" className="bg-brand-white py-24 sm:py-32">
+      <section id="work" className="bg-brand-white py-16 sm:py-24">
         <div className="mx-auto max-w-6xl px-6 sm:px-10 reveal">
           <SectionLabel num="08" label="Previous Work" />
 
@@ -693,7 +799,13 @@ export default function LandingPage() {
           </p>
 
           {/* Case study card */}
-          <div className="mt-14 grid gap-0 lg:grid-cols-[1.15fr_1fr] border border-brand-charcoal/10 overflow-hidden">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true, amount: 0.2 }}
+            className="mt-14 grid gap-0 lg:grid-cols-[1.15fr_1fr] border border-brand-charcoal/10 overflow-hidden"
+          >
             {/* Browser chrome mock + UI illustration */}
             <div className="relative bg-brand-eucalyptus/10 overflow-hidden min-h-[260px] lg:min-h-0">
               <div className="flex items-center gap-1.5 px-4 py-3 border-b border-brand-charcoal/8 bg-brand-charcoal/[0.04]">
@@ -731,7 +843,7 @@ export default function LandingPage() {
             </div>
 
             {/* Details panel */}
-            <div className="flex flex-col justify-center p-8 sm:p-10 lg:p-12 border-t lg:border-t-0 lg:border-l border-brand-charcoal/8">
+            <div className="flex flex-col justify-center p-6 sm:p-10 lg:p-12 border-t lg:border-t-0 lg:border-l border-brand-charcoal/8">
               <div className="mb-5 inline-flex items-center gap-2">
                 <div className="h-1.5 w-1.5 rounded-full bg-brand-rust" />
                 <span className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-charcoal/40">
@@ -783,12 +895,12 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* ── 09 FINAL CTA ─────────────────────────────────────── */}
-      <section id="cta" className="relative bg-brand-charcoal py-28 sm:py-36 overflow-hidden">
+      <section id="cta" className="relative bg-brand-charcoal py-20 sm:py-36 overflow-hidden">
         <motion.div
           className="pointer-events-none absolute right-[-15%] top-1/2 -translate-y-1/2 opacity-40"
           style={isDesktop ? { y: ctaRingY } : undefined}
@@ -804,7 +916,7 @@ export default function LandingPage() {
 
             <h2
               className="font-[family-name:var(--font-dm-serif)] italic text-white leading-tight"
-              style={{ fontSize: "clamp(2.4rem, 5vw, 4rem)" }}
+              style={{ fontSize: "clamp(1.8rem, 7vw, 4rem)" }}
             >
               Let&apos;s take a look at your system
             </h2>
@@ -814,7 +926,7 @@ export default function LandingPage() {
             </p>
 
             <motion.div
-              className="mt-10 inline-flex"
+              className="mt-10 w-full sm:w-auto inline-flex"
               animate={
                 prefersReducedMotion
                   ? undefined
@@ -824,14 +936,35 @@ export default function LandingPage() {
               }
               transition={{ duration: 1.15, times: [0, 0.38, 1], repeat: Infinity, repeatDelay: 2.8 }}
             >
-              <Button
-                size="lg"
-                className="bg-brand-rust text-white hover:bg-brand-rust/85 border-transparent rounded-sm px-12 text-sm font-semibold"
-                onClick={() => setAuditOpen(true)}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full"
               >
-                Get Free Review
-                <ArrowRightIcon size={15} className="ml-1.5" />
-              </Button>
+                <Button
+                  size="lg"
+                  className="relative w-full overflow-hidden bg-brand-rust text-white hover:bg-brand-rust/85 border-transparent rounded-sm group shadow-lg hover:shadow-xl transition-shadow px-12 text-sm font-semibold"
+                  onClick={() => setAuditOpen(true)}
+                >
+                  <motion.span
+                    initial={{ x: "-100%" }}
+                    whileHover={{ x: "100%" }}
+                    transition={{ duration: 0.4 }}
+                    className="absolute inset-0 bg-white/20"
+                  />
+                  <span className="relative flex items-center justify-center">
+                    Get Free Review
+                    <motion.span 
+                      initial={{ x: 0 }}
+                      whileHover={{ x: 3 }}
+                      transition={{ type: "spring", stiffness: 200 }}
+                      className="ml-1.5"
+                    >
+                      <ArrowRightIcon size={15} />
+                    </motion.span>
+                  </span>
+                </Button>
+              </motion.div>
             </motion.div>
           </div>
         </div>

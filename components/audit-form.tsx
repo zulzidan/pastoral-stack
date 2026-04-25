@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -77,21 +78,42 @@ export function AuditForm({ open, onOpenChange }: AuditFormProps) {
         </DialogHeader>
 
         {status === "success" ? (
-          <div className="flex flex-col items-center gap-4 py-8 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#2e6a4a]">
-              <CheckIcon size={22} className="text-white" />
-            </div>
-            <p className="text-white/80 text-sm leading-relaxed max-w-xs">
-              Thanks — we&apos;ll be in touch shortly to arrange your free review.
-            </p>
-            <Button
-              variant="ghost"
-              className="mt-2 border border-white/20 text-white/70 hover:text-white hover:bg-white/10 bg-transparent"
-              onClick={() => handleClose(false)}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+            className="flex flex-col items-center gap-4 py-8 text-center"
+          >
+            <motion.div
+              initial={{ scale: 0, rotate: -45 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.15, type: "spring", stiffness: 180 }}
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-[#2e6a4a]"
             >
-              Close
-            </Button>
-          </div>
+              <CheckIcon size={22} className="text-white" />
+            </motion.div>
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="text-white/80 text-sm leading-relaxed max-w-xs"
+            >
+              Thanks — we&apos;ll be in touch shortly to arrange your free review.
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.35 }}
+            >
+              <Button
+                variant="ghost"
+                className="mt-2 border border-white/20 text-white/70 hover:text-white hover:bg-white/10 bg-transparent"
+                onClick={() => handleClose(false)}
+              >
+                Close
+              </Button>
+            </motion.div>
+          </motion.div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-2 flex flex-col gap-4">
             <div className="grid gap-4 sm:grid-cols-2">
