@@ -201,11 +201,16 @@ export default function LandingPage() {
   const prefersReducedMotion = useReducedMotion()
   const [isDesktop, setIsDesktop] = useState(false)
   const [auditOpen, setAuditOpen] = useState(false)
+  const [heroVisible, setHeroVisible] = useState(false)
   const { scrollYProgress } = useScroll()
   const heroRingY = useTransform(scrollYProgress, [0, 0.28], [0, -80])
   const heroTextY = useTransform(scrollYProgress, [0, 0.28], [0, -38])
   const heroModelY = useTransform(scrollYProgress, [0, 0.28], [0, 56])
   const ctaRingY = useTransform(scrollYProgress, [0.55, 1], [0, -52])
+
+  useEffect(() => {
+    setHeroVisible(true)
+  }, [])
 
   useEffect(() => {
     const revealElements = Array.from(document.querySelectorAll<HTMLElement>(".reveal"))
@@ -275,7 +280,7 @@ export default function LandingPage() {
               className="max-w-3xl reveal is-visible"
               variants={heroTimelineVariants}
               initial={prefersReducedMotion ? false : "hidden"}
-              animate="show"
+              animate={heroVisible ? "show" : "hidden"}
               style={isDesktop ? { y: heroTextY } : undefined}
             >
               <motion.div variants={heroItemVariants} className="mb-8 flex items-center gap-3">
@@ -324,7 +329,7 @@ export default function LandingPage() {
             <motion.div
               className="hidden lg:block"
               initial={prefersReducedMotion ? false : { opacity: 0, x: 24 }}
-              animate={prefersReducedMotion ? undefined : { opacity: 1, x: 0 }}
+              animate={heroVisible && !prefersReducedMotion ? { opacity: 1, x: 0 } : prefersReducedMotion ? undefined : { opacity: 0, x: 24 }}
               transition={{ duration: 0.75, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
               style={isDesktop ? { y: heroModelY } : undefined}
             >

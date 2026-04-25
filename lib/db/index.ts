@@ -1,11 +1,9 @@
-import { drizzle } from "drizzle-orm/node-postgres"
-import { Pool } from "pg"
+import { neon } from "@neondatabase/serverless"
+import { drizzle } from "drizzle-orm/neon-http"
 import * as schema from "./schema"
 
 function getConnectionString() {
 	const raw =
-		process.env.DATABASE_URL_UNPOOLED ??
-		process.env.POSTGRES_URL_NON_POOLING ??
 		process.env.DATABASE_URL ??
 		process.env.POSTGRES_URL
 
@@ -13,23 +11,9 @@ function getConnectionString() {
 		throw new Error("Missing database connection string")
 	}
 
-	const url = new URL(raw)
-	// Avoid forcing channel binding in local/runtime environments.
-	url.searchParams.delete("channel_binding")
-	return url.toString()
+	return raw
 }
 
-const globalForDb = globalThis as unknown as { pgPool?: Pool }
+const sql = neon(getConnectionString())
 
-const pool =
-	globalForDb.pgPool ??
-	new Pool({
-		connectionString: getConnectionString(),
-		ssl: { rejectUnauthorized: false },
-	})
-
-if (process.env.NODE_ENV !== "production") {
-	globalForDb.pgPool = pool
-}
-
-export const db = drizzle(pool, { schema })
+export const db = drizzle(sql, { schema })

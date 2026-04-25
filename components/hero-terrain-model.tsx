@@ -8,6 +8,7 @@ import {
   Float32BufferAttribute,
   Group,
   MathUtils,
+  PCFShadowMap,
   PlaneGeometry,
   SRGBColorSpace,
 } from "three"
@@ -104,15 +105,17 @@ function ProceduralTerrain() {
     return { solidGeo: geo, wireGeo }
   }, [])
 
+  const timeRef = useRef(0)
   useFrame((state, delta) => {
     if (!groupRef.current) return
-    const { pointer, clock } = state
+    timeRef.current += delta
+    const { pointer } = state
 
     const targetX = 0.35 + pointer.y * 0.10
     const targetY = -0.52 + pointer.x * 0.20
     groupRef.current.rotation.x = MathUtils.damp(groupRef.current.rotation.x, targetX, 3.8, delta)
     groupRef.current.rotation.y = MathUtils.damp(groupRef.current.rotation.y, targetY, 3.8, delta)
-    groupRef.current.position.y = Math.sin(clock.elapsedTime * 0.72) * 0.055
+    groupRef.current.position.y = Math.sin(timeRef.current * 0.72) * 0.055
   })
 
   return (
@@ -140,6 +143,7 @@ export function HeroTerrainModel({ className }: HeroTerrainModelProps) {
           camera={{ position: [0, 2.8, 5.2], fov: 34 }}
           onCreated={({ gl }) => {
             gl.outputColorSpace = SRGBColorSpace
+            gl.shadowMap.type = PCFShadowMap
           }}
         >
           <color attach="background" args={["#1d4333"]} />

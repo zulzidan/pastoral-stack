@@ -65,7 +65,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ id: lead.id }, { status: 201 })
   } catch (err) {
+    const cause = err instanceof Error && err.cause instanceof Error ? err.cause : null
     console.error("[leads] insert error", err instanceof Error ? err.message : err)
+    if (cause) console.error("[leads] insert cause", cause.message, (cause as NodeJS.ErrnoException).code)
 
     if (isConnectionError(err)) {
       return NextResponse.json(

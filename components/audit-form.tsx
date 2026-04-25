@@ -85,8 +85,8 @@ export function AuditForm({ open, onOpenChange }: AuditFormProps) {
               Thanks — we&apos;ll be in touch shortly to arrange your free review.
             </p>
             <Button
-              variant="outline"
-              className="mt-2 border-white/20 text-white/70 hover:text-white hover:bg-white/8"
+              variant="ghost"
+              className="mt-2 border border-white/20 text-white/70 hover:text-white hover:bg-white/10 bg-transparent"
               onClick={() => handleClose(false)}
             >
               Close
